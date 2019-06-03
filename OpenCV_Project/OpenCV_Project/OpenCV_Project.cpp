@@ -15,13 +15,13 @@ Mat imagePogchamp = imread("pogchamp.png", IMREAD_UNCHANGED);
 Mat imageKappa = imread("kappa.png", IMREAD_UNCHANGED);
 Mat imageWutface = imread("wutface.png", IMREAD_UNCHANGED);
 
-CascadeClassifier face_cascade;
-CascadeClassifier eyes_cascade;
+CascadeClassifier face_cascade; // Stosowanie klasyfikatora żeby wykryć twarze zapisane w kaskadach
+CascadeClassifier eyes_cascade; // Stosowanie klasyfikatora żeby wykryć oczy zapisane w kaskadach
 
 void overlayImage(Mat* src, Mat* overlay, const Point& location)
 {
 	// overlayImage() to funkcja która nakłada, obraz na inny obraz.
-	// W moim przypadku pod-obrazem jest kamera, nad-obrazem "image.png"
+	// W moim przypadku pod-obrazem jest kamera, nad-obrazem któryś z image.png
 
 	for (int y = max(location.y, 0); y < src->rows; ++y)
 	{
@@ -171,7 +171,7 @@ void detectAndDisplay(Mat frame) {
 		vector<Rect> eyes;
 		eyes_cascade.detectMultiScale(faceROI, eyes);
 
-		// Stworzenie kopii globalnej zmiennej ze zdjęciem
+		// Stworzenie kopii globalnej zmiennej ze zdjęciem (i dobranie zdjęcia)
 		Mat image = Mat();
 		if (choise == 1) image = imageKappa;
 		else if (choise == 2) image = imagePogchamp;
@@ -180,9 +180,18 @@ void detectAndDisplay(Mat frame) {
 
 		// Jeśli znalazło więcej niż jedno oko przeskaluje obraz do twarzy
 		if (eyes.size() > 1) {
-						
-			// Skalowanie elementu (zdjęcia) do rozmiaru twarzy (wejście - image, wyjście - image_out)
-			resize(image, image_out, faceROI.size(), faceROI.cols/100, faceROI.rows/100);
+
+			// Dobranie skali
+			double scale = 0;
+
+			if(choise == 1) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / 120;
+			else if(choise == 2) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / 200;
+			else if (choise == 3) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / 140;
+			
+			Size zero = Size(); // Zmienna pomocnicza
+			
+			// Skalowanie elementu (zdjęcia) do podanej skali (wejście - image, wyjście - image_out)
+			resize(image, image_out, zero, scale, scale, INTER_LINEAR);
 
 			// Obliczanie punktu centralnego zdjęcia żeby pokryć go z punktem centralnym twarzy ("-50" na końcu oznacza 50px do góry)
 			Point ImgPos(center.x - (image_out.cols / 2), center.y - (image_out.rows / 2) - 50);
