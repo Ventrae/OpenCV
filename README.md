@@ -8,5 +8,6 @@ Program will swap your face with popular twitch emote such as:
 -Wutface
 
 Project status:
+
 	- [2019.06.04]: Finished essential part and stable version, necessary to pass subject.
 					**Project will be developed**
