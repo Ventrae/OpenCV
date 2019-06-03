@@ -1,16 +1,20 @@
 ﻿#include "opencv2/objdetect.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
-#include <math.h>
 #include <iostream>
+#include <windows.h>
 
 using namespace std;
 using namespace cv;
 
 void detectAndDisplay(Mat frame);
+int choise = 0;
 
 // Globalna zmienna z wczytywaniem pliku zdjęcia do zmiennej
-Mat image = imread("image.png", IMREAD_UNCHANGED);
+Mat imagePogchamp = imread("pogchamp.png", IMREAD_UNCHANGED);
+Mat imageKappa = imread("kappa.png", IMREAD_UNCHANGED);
+Mat imageWutface = imread("wutface.png", IMREAD_UNCHANGED);
+
 CascadeClassifier face_cascade;
 CascadeClassifier eyes_cascade;
 
@@ -54,7 +58,7 @@ int main(int argc, const char** argv)
 	string EyeCascadeName = "haarcascade_eye.xml";
 
 	if (!face_cascade.load(FaceCascadeName)) {
-		cout << "Error: Wczytywanie kaskady \"FaceCascadeName\" | ABORTING"<<endl;
+		cout << "Error: Wczytywanie kaskady \"FaceCascadeName\" | ABORTING" << endl;
 		return 0;
 	}
 
@@ -66,38 +70,86 @@ int main(int argc, const char** argv)
 	int camera_device = 0; // Załadowanie domyślnej kamery systemu
 	VideoCapture capture; // Tworzenie obiektu z którego można zczytywać pojedyńcze klatki
 
+	cout << "Ktorym memem chcesz sie stac:" << endl;
+	cout << "1. \"Kappa\"" << endl;
+	cout << "2. \"Pogchamp\"" << endl;
+	cout << "3. \"Wutface\"" << endl;
+	cin >> choise;
+
+	if (choise != 1 && choise != 2 && choise != 3) {
+
+		while (choise != 1 && choise != 2 && choise != 3) {
+			system("cls");
+			cout << "Ktorym memem chcesz sie stac:" << endl;
+			cout << "1. \"Kappa\"" << endl;
+			cout << "2. \"Pogchamp\"" << endl;
+			cout << "3. \"Wutface\"" << endl;
+			cin >> choise;
+		}
+
+		capture.open(camera_device);
+		if (!capture.isOpened()) {
+			cout << "Error: Otwieranie okna kamery | ABORTING" << endl;
+			return 0;
+		}
+
+		Mat frame; // Utworzenie obiektu z pojedyńczą klatką
+
+		// Odświeżanie obrazu (nadpisywanie obiektu frame, nowym frame'em przechwyconym z kamerki
+		system("cls");
+		while (capture.read(frame))
+		{
+			if (frame.empty()) {
+				cout << "Error: Nie odczytano klatki | ABORTING" << endl;
+				break;
+			}
+
+			// Stosowanie klasyfikatora żeby wykryć twarze, oczy lub inne elementy zapisane w kaskadach
+			// oraz różne działania na nich (skalowanie, obracanie, filtry itp. itd.)
+			detectAndDisplay(frame);
+
+			if (waitKey(10) == 27) {
+				break; // Wyjście z programu (klawisz Esc)
+			}
+
+		}
+
+	}
+	else {
+
+		capture.open(camera_device);
+		if (!capture.isOpened()) {
+			cout << "Error: Otwieranie okna kamery | ABORTING" << endl;
+			return 0;
+		}
+
+		Mat frame; // Utworzenie obiektu z pojedyńczą klatką
+
+		// Odświeżanie obrazu (nadpisywanie obiektu frame, nowym frame'em przechwyconym z kamerki
+		system("cls");
+		while (capture.read(frame))
+		{
+			if (frame.empty()) {
+				cout << "Error: Nie odczytano klatki | ABORTING" << endl;
+				break;
+			}
+
+			// Stosowanie klasyfikatora żeby wykryć twarze, oczy lub inne elementy zapisane w kaskadach
+			// oraz różne działania na nich (skalowanie, obracanie, filtry itp. itd.)
+			detectAndDisplay(frame);
+
+			if (waitKey(10) == 27) {
+				break; // Wyjście z programu (klawisz Esc)
+			}
+
+		}
+	}
+
 	// Otworzenie okna z przechwyconym obrazem
-	capture.open(camera_device);
-	if (!capture.isOpened()) {
-		cout << "Error: Otwieranie okna kamery | ABORTING" << endl;
-		return 0;
-	}
-
-	Mat frame; // Utworzenie obiektu z pojedyńczą klatką
-
-	// Odświeżanie obrazu (nadpisywanie obiektu frame, nowym frame'em przechwyconym z kamerki
-	while (capture.read(frame)) 
-	{
-		if (frame.empty()) {
-			cout << "Error: Nie odczytano klatki | ABORTING" << endl;
-			break;
-		}
-
-		// Stosowanie klasyfikatora żeby wykryć twarze, oczy lub inne elementy zapisane w kaskadach
-		// oraz różne działania na nich (skalowanie, obracanie, filtry itp. itd.)
-		detectAndDisplay(frame); 
-
-		if (waitKey(10) == 27) {
-			break; // Wyjście z programu (klawisz Esc)
-		}
-
-	}
-
 	return 0;
 }
 
-void detectAndDisplay(Mat frame)
-{
+void detectAndDisplay(Mat frame) {
 
 	// Przefiltrowanie klatki na czarno-biało (ponieważ kaskady działają tylko na czarno-biało)
 	Mat frame_gray;
@@ -107,8 +159,8 @@ void detectAndDisplay(Mat frame)
 	vector<Rect> faces;
 	face_cascade.detectMultiScale(frame_gray, faces);
 	
-	for (size_t i = 0; i < faces.size(); i++)
-	{
+	for (size_t i = 0; i < faces.size(); i++) {
+
 		// Wyszukiwanie centrum twarzy
 		Point center(faces[i].x + faces[i].width / 2, faces[i].y + faces[i].height / 2);
 		
@@ -120,30 +172,23 @@ void detectAndDisplay(Mat frame)
 		eyes_cascade.detectMultiScale(faceROI, eyes);
 
 		// Stworzenie kopii globalnej zmiennej ze zdjęciem
+		Mat image = Mat();
+		if (choise == 1) image = imageKappa;
+		else if (choise == 2) image = imagePogchamp;
+		else image = imageWutface;
 		Mat image_out = image;
 
-		// Jeśli znalazło dwoje oczu przeskaluje obraz do twarzy
-		if (eyes.size() == 2) {
-			// Skala = (wzór na odległość dwóch punktów / 69), 69 - dystans między oczami na obrazie
-			double scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / (69 * 0.7);
-			Size zero = Size(); // Zmienna pomocnicza
-			// Skalowanie elementu (zdjęcia) do podanej skali (wejście - image, wyjście - image_out)
-			resize(image, image_out, zero, scale, scale, INTER_LINEAR);
-		}
+		// Jeśli znalazło więcej niż jedno oko przeskaluje obraz do twarzy
+		if (eyes.size() > 1) {
+						
+			// Skalowanie elementu (zdjęcia) do rozmiaru twarzy (wejście - image, wyjście - image_out)
+			resize(image, image_out, faceROI.size(), faceROI.cols/100, faceROI.rows/100);
 
-		// Obliczanie punktu centralnego zdjęcia żeby pokryć go z punktem centralnym twarzy ("-50" na końcu oznacza 50px do góry)
-		Point ImgPos(center.x - (image_out.cols / 2), center.y - (image_out.rows / 2) - 50);
-		overlayImage(&frame, &image_out, ImgPos); // Nałożenie obrazu na kamerę (modyfikacja klatki w pamięci, nie wizualnie)
-		
-		/*
-			Linijki:
-				- "Point ReinPos(center.x - (image_out.cols / 2), center.y - (image_out.rows / 2) - 50);"
-				- "overlayImage(&frame, &image_out, ReinPos);"
-			mogły by sie także znajdować w if'ie od znajdywania dwóch oczu, lecz wtedy kiedy program nie wykryje twarzy (przez ruch, światło itp.)
-			nie pokaże wogle zdjęcia. Ale zawsze będzie w dobrym rozmiarze.
-			W aktualnym wariancie jeśli nie znajdzie dwójki oczu nie skaluje obrazu i wyświetla domyślny rozmiar zdjęcia
-			(mogą także pojawić się dwie twarze, w obrębie znalezionych twarzy)
-		*/
+			// Obliczanie punktu centralnego zdjęcia żeby pokryć go z punktem centralnym twarzy ("-50" na końcu oznacza 50px do góry)
+			Point ImgPos(center.x - (image_out.cols / 2), center.y - (image_out.rows / 2) - 50);
+			overlayImage(&frame, &image_out, ImgPos); // Nałożenie obrazu na kamerę (modyfikacja klatki w pamięci, nie wizualnie)
+
+		}
 
 	}
 
