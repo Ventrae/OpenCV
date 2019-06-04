@@ -15,6 +15,8 @@ Mat imagePogchamp = imread("pogchamp.png", IMREAD_UNCHANGED);
 Mat imageKappa = imread("kappa.png", IMREAD_UNCHANGED);
 Mat imageWutface = imread("wutface.png", IMREAD_UNCHANGED);
 
+Mat lastFrame;
+
 CascadeClassifier face_cascade; // Stosowanie klasyfikatora żeby wykryć twarze zapisane w kaskadach
 CascadeClassifier eyes_cascade; // Stosowanie klasyfikatora żeby wykryć oczy zapisane w kaskadach
 
@@ -151,6 +153,12 @@ int main(int argc, const char** argv)
 
 void detectAndDisplay(Mat frame) {
 
+	Size okno = Size();
+	okno.width = 600;
+	okno.height = 400;
+
+	resize(frame, frame, okno);
+
 	// Przefiltrowanie klatki na czarno-biało (ponieważ kaskady działają tylko na czarno-biało)
 	Mat frame_gray;
 	cvtColor(frame, frame_gray, COLOR_BGR2GRAY);
@@ -173,9 +181,9 @@ void detectAndDisplay(Mat frame) {
 
 		// Stworzenie kopii globalnej zmiennej ze zdjęciem (i dobranie zdjęcia)
 		Mat image = Mat();
-		if (choise == 1) image = imageKappa;
-		else if (choise == 2) image = imagePogchamp;
-		else image = imageWutface;
+			if (choise == 1) image = imageKappa;
+			else if (choise == 2) image = imagePogchamp;
+			else image = imageWutface;
 		Mat image_out = image;
 
 		// Jeśli znalazło więcej niż jedno oko przeskaluje obraz do twarzy
@@ -184,22 +192,26 @@ void detectAndDisplay(Mat frame) {
 			// Dobranie skali
 			double scale = 0;
 
-			if(choise == 1) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / 120;
-			else if(choise == 2) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / 200;
-			else if (choise == 3) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / 140;
+			if(choise == 1) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / (okno.width/5);
+			else if(choise == 2) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / (okno.width/4.5);
+			else if (choise == 3) scale = sqrt(pow(eyes[0].x - eyes[1].x, 2) + pow(eyes[0].y - eyes[1].y, 2)) / (okno.width/4.8);
 			
-			Size zero = Size(); // Zmienna pomocnicza
-			
-			// Skalowanie elementu (zdjęcia) do podanej skali (wejście - image, wyjście - image_out)
-			resize(image, image_out, zero, scale, scale, INTER_LINEAR);
+			Size average = Size(); // Zmienna pomocnicza
+			average.width = (frame.cols + lastFrame.cols) / 2 * scale;
+			average.height = (frame.rows + lastFrame.cols) / 2 * scale;
 
-			// Obliczanie punktu centralnego zdjęcia żeby pokryć go z punktem centralnym twarzy ("-50" na końcu oznacza 50px do góry)
-			Point ImgPos(center.x - (image_out.cols / 2), center.y - (image_out.rows / 2) - 50);
+			// Skalowanie elementu (zdjęcia) do podanej skali (wejście - image, wyjście - image_out)
+			resize(image, image_out, average);
+
+			// Obliczanie punktu centralnego zdjęcia żeby pokryć go z punktem centralnym twarzy
+			Point ImgPos(center.x - (image_out.cols / 2), center.y - (image_out.rows / 2));
 			overlayImage(&frame, &image_out, ImgPos); // Nałożenie obrazu na kamerę (modyfikacja klatki w pamięci, nie wizualnie)
 
 		}
 
 	}
+
+	lastFrame = frame;
 
 	// Wywołanie zdjęcia na kamerze
 	imshow("Projekt NAI - Filip Dobrzyniewicz [s16739]", frame);
